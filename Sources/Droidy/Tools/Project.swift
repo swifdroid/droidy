@@ -12,7 +12,9 @@ public struct SigningConfig {
 }
 
 class Project {
-    var projectFolder: URL
+    let swiftProjectFolder: URL
+    lazy var projectFolder = swiftProjectFolder.appendingPathComponent("AndroidProject")
+    var androidProjectFolder: URL { projectFolder }
     var appFolder: URL { projectFolder.appendingPathComponent("app") }
 	var appBuildFolder: URL { appFolder.appendingPathComponent("build") }
 	var appBuildOutputsFolder: URL { appBuildFolder.appendingPathComponent("outputs") }
@@ -36,7 +38,7 @@ class Project {
     
     init (_ droidy: Droidy) {
         self.droidy = droidy
-        self.projectFolder = droidy.projectFolder
+        self.swiftProjectFolder = droidy.swiftProjectFolder
     }
     
     func prepare() {
@@ -52,7 +54,8 @@ class Project {
                 cookAppFolder()
             } catch {
                 print("⛔️ Unable to prepare android project\n\(error)")
-                fatalError()
+                try! FileManager.default.removeItem(atPath: projectFolder.path)
+                exit(1)
             }
         }
     }
@@ -66,7 +69,7 @@ class Project {
             print("⛔️ Unable to cook `settings.gradle` file")
             fatalError()
         }
-        let filePath = projectFolder.appendingPathComponent("settings.gradle").path
+        let filePath = androidProjectFolder.appendingPathComponent("settings.gradle").path
         try? FileManager.default.removeItem(atPath: filePath)
         guard FileManager.default.createFile(atPath: filePath, contents: data, attributes: nil) else {
             print("⛔️ Unable to save `settings.gradle` file")
@@ -82,7 +85,7 @@ class Project {
             print("⛔️ Unable to cook `gradle.properties` file")
             fatalError()
         }
-        let filePath = projectFolder.appendingPathComponent("gradle.properties").path
+        let filePath = androidProjectFolder.appendingPathComponent("gradle.properties").path
         try? FileManager.default.removeItem(atPath: filePath)
         guard FileManager.default.createFile(atPath: filePath, contents: data, attributes: nil) else {
             print("⛔️ Unable to save `gradle.properties` file")
@@ -98,7 +101,7 @@ class Project {
             print("⛔️ Unable to cook `local.properties` file")
             fatalError()
         }
-        let filePath = projectFolder.appendingPathComponent("local.properties").path
+        let filePath = androidProjectFolder.appendingPathComponent("local.properties").path
         try? FileManager.default.removeItem(atPath: filePath)
         guard FileManager.default.createFile(atPath: filePath, contents: data, attributes: nil) else {
             print("⛔️ Unable to save `local.properties` file")
@@ -128,7 +131,7 @@ class Project {
             print("⛔️ Unable to cook `.gitignore` file")
             fatalError()
         }
-        let filePath = projectFolder.appendingPathComponent(".gitignore").path
+        let filePath = androidProjectFolder.appendingPathComponent(".gitignore").path
         try? FileManager.default.removeItem(atPath: filePath)
         guard FileManager.default.createFile(atPath: filePath, contents: data, attributes: nil) else {
             print("⛔️ Unable to save `.gitignore` file")
@@ -169,11 +172,11 @@ class Project {
             print("⛔️ Unable to cook `build.gradle` file")
             fatalError()
         }
-        let filePath = projectFolder.appendingPathComponent("build.gradle").path
+        let filePath = androidProjectFolder.appendingPathComponent("build.gradle").path
         try? FileManager.default.removeItem(atPath: filePath)
         guard FileManager.default.createFile(atPath: filePath, contents: data, attributes: nil) else {
             print("⛔️ Unable to save `build.gradle` file")
-            fatalError()
+            exit(1)
         }
     }
     
@@ -197,7 +200,7 @@ class Project {
     }
     
     func cookGradleWrapper() {
-        guard !FileManager.default.fileExists(atPath: projectFolder.appendingPathComponent("gradlew").path) else { return }
+        guard !FileManager.default.fileExists(atPath: androidProjectFolder.appendingPathComponent("gradlew").path) else { return }
         print("🗜 Generating gradle wrapper")
         droidy.gradle.generateWrapper(projectPath: projectFolder.path)
     }
@@ -233,7 +236,7 @@ class Project {
                 release {
                     minifyEnabled false
                     proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-                    signingConfig signingConfigs.mySigning
+                    signingConfig signringConfigs.mySigning
                 }
                 debug {
                     minifyEnabled false

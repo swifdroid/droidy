@@ -10,7 +10,7 @@ import Foundation
 class ADB {
 	private let droidy: Droidy
 	
-	private var _projectPath: String { droidy.project.projectFolder.path }
+	private var _projectPath: String { droidy.project.androidProjectFolder.path }
 	private var _pathToBin: String { droidy.sdk.platformToolsFolder.appendingPathComponent("adb").path }
 	
 	init (_ droidy: Droidy) {
@@ -153,16 +153,16 @@ class ADB {
 		group.wait()
 		guard process.terminationStatus == 0 else {
 			print("⛔️ Unable to install apk on device \(device.id): \(String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)!)")
-			fatalError()
+			exit(1)
 		}
 		guard let out = String(data: resultData, encoding: .utf8) else {
 			print("📱 Unable to install apk on device \(device.id)")
-			fatalError()
+            exit(1)
 		}
 		let lines = out.trimmingCharacters(in: .newlines).components(separatedBy: "\n")
 		guard lines.count > 0, lines.last?.contains("Success") == true else {
 			print("📱 Unable to install apk on device \(device.id):\n\(out)")
-			fatalError()
+            exit(1)
 		}
 		print("🎉 Installed in \(Double(round(1000 * Date().timeIntervalSince(startDate)) / 1000)) seconds")
 	}
@@ -215,11 +215,11 @@ class ADB {
 	func pids(on device: Device, attempt: Int = 1) -> [String] {
 		guard attempt < 5 else {
 			print("📱 Unable to get app pid on device \(device.id)")
-			fatalError()
+			exit(1)
 		}
 		
 		if attempt > 1 {
-			usleep(UInt32(attempt * 300_000))
+			sleep(1)
 		}
 		
 		let stdout = Pipe()

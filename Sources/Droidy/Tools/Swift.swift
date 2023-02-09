@@ -216,6 +216,13 @@ class Swift {
             .appendingPathComponent("jniLibs")
             .appendingPathComponent(arch.android)
         
+        do {
+            try FileManager.default.createDirectory(atPath: outputPathURL.path, withIntermediateDirectories: true)
+        } catch {
+            print("⛔️ Unable to create directories for native library \(arch.rawValue)")
+            exit(1)
+        }
+        
         let stdout = Pipe()
         let stderr = Pipe()
 
@@ -247,12 +254,16 @@ class Swift {
         }
         let libPathURL = URL(fileURLWithPath: _libPath(arch).trimmingCharacters(in: .whitespacesAndNewlines))
         do {
+            try FileManager.default.createDirectory(atPath: outputPathURL.path, withIntermediateDirectories: true)
             let files = try FileManager.default.contentsOfDirectory(atPath: libPathURL.path)
                 .filter { $0.hasSuffix(".so") }
             
             for file in files {
-                try? FileManager.default.removeItem(atPath: outputPathURL.appendingPathComponent(file).path)
-                try? FileManager.default.copyItem(atPath: libPathURL.appendingPathComponent(file).path, toPath: outputPathURL.appendingPathComponent(file).path)
+                let source = libPathURL.appendingPathComponent(file).path
+                let output = outputPathURL.appendingPathComponent(file).path
+                print("📑 Copying \(file)")
+                try? FileManager.default.removeItem(atPath: output)
+                try FileManager.default.copyItem(atPath: source, toPath: output)
             }
         } catch {
             print("⛔️ Unable to get list of *.so files for \(arch.android) from \(libPathURL.path)")

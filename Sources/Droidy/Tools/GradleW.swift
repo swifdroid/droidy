@@ -30,7 +30,7 @@ class GradleW {
 		let stderr = Pipe()
 		
 		let process = Process()
-		process.launchPath = _pathToBin
+		process.executableURL = URL(fileURLWithPath: _pathToBin)
 		process.currentDirectoryPath = _projectPath
 		process.arguments = ["assembleDebug"]
 		process.standardOutput = stdout
@@ -53,7 +53,7 @@ class GradleW {
 		group.wait()
 		guard process.terminationStatus == 0 else {
 			print("⛔️ Unable to assemble debug with gradlew: \(String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)!)")
-			fatalError()
+			exit(1)
 		}
 		print("🎉 Built in \(Double(round(1000 * Date().timeIntervalSince(startDate)) / 1000)) seconds")
 	}

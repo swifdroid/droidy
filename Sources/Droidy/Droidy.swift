@@ -17,11 +17,11 @@ internal func projectDir(buildDir: String) -> String {
 }
 
 public class Droidy {
-    let projectFolder: URL
+    let swiftProjectFolder: URL
     let java = Java()
     let gradle = Gradle()
     let ndk = NDK()
-    lazy var toolchain = Toolchain(ndkPath: ndk._path, projectFolder: projectFolder)
+    lazy var toolchain = Toolchain(ndkPath: ndk._path, projectFolder: swiftProjectFolder)
     lazy var sdk = SDK(self)
     lazy var project = Project(self)
 	lazy var gradlew = GradleW(self)
@@ -31,13 +31,13 @@ public class Droidy {
     
     @discardableResult
     public init(buildDir: String = #file) {
-        self.projectFolder = projectDirURL(buildDir: buildDir)
+        self.swiftProjectFolder = projectDirURL(buildDir: buildDir)
         
-        let packageFilePath = projectFolder.appendingPathComponent("Package.swift").path
+        let packageFilePath = swiftProjectFolder.appendingPathComponent("Package.swift").path
         if !FileManager.default.fileExists(atPath: packageFilePath) {
             print("""
                 ⛔️ seems working directory is wrong
-                    \(projectFolder.absoluteString)
+                    \(swiftProjectFolder.absoluteString)
                 💁‍♂️ cause it doesn't contain the Package.swift file
                 👉 to fix it please edit your scheme, open Options tab and set custom working directory to the project folder
                 """)
@@ -293,11 +293,12 @@ public class Droidy {
     
     @discardableResult
     public func run() -> Self {
-		guard let device = preferredDevice ?? adb.devicesList().first else {
-			print("✅ No devices found to install and launch")
+		guard let device = preferredDevice ?? adb.devicesList().last else {
+			print("✅ No devices found to install to. Ending")
 			return self
 		}
 		gradlew.assembleDebug()
+        print("Installing to '\(device)'")
 		adb.install(on: device, pathToAPK: gradlew.pathToAPK(arch: device.arch, debug: true).path)
 		adb.kill(on: device)
 		adb.start(on: device, activity: "MainActivity")

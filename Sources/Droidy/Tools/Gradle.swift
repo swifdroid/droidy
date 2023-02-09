@@ -129,7 +129,7 @@ class Gradle {
         process.waitUntilExit()
         group.wait()
         guard process.terminationStatus == 0 else {
-            print("⛔️ Unable to generate gradlew: \(String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)!)")
+            print("⛔️ Unable to generate gradlew: \(String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)!). Please remove the `AndroidProject` directory from your Swift project before trying again.")
             exit(1)
         }
     }

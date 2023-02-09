@@ -8,7 +8,8 @@
 import Foundation
 
 class Java {
-    var versions = ["17", "18", "19"]
+    /// https://stackoverflow.com/questions/21423633/build-project-without-android-studio
+    var versions = ["17"]
     var autoInstall = false
     
     init () {}
