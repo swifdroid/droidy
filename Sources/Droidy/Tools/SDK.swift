@@ -58,7 +58,7 @@ class SDK {
             guard !FileManager.default.fileExists(atPath: defaultPath) else {
                 _path = defaultPath
                 acceptAllLicenses()
-                installPlatforforms()
+                installPlatformTools()
                 return print("🔦 SDK has been found at: \(defaultPath)")
             }
 //            guard !FileManager.default.fileExists(atPath: homePath) else {
@@ -69,7 +69,7 @@ class SDK {
             guard !autoDownload else {
                 _download()
                 acceptAllLicenses()
-                installPlatforforms()
+                installPlatformTools()
                 return
             }
             print("""
@@ -83,11 +83,11 @@ class SDK {
             fatalError()
         }
         acceptAllLicenses()
-        installPlatforforms()
+        installPlatformTools()
     }
     
-    func installPlatforforms() {
-        guard !FileManager.default.fileExists(atPath: sdkFolder.appendingPathComponent("platform-tools").path) else { return }
+    func installPlatformTools() {
+        guard !FileManager.default.fileExists(atPath: platformToolsFolder.path) else { return }
         let stdout = Pipe()
         let stderr = Pipe()
 
@@ -96,7 +96,7 @@ class SDK {
         print("sdkFolder.path: \(sdkFolder.path)")
         print("tools: \(cmdLineToolsBinFolder.appendingPathComponent("sdkmanager").path)")
         process.currentDirectoryPath = sdkFolder.path
-        process.arguments = ["bash", "-c", "yes | " + cmdLineToolsBinFolder.appendingPathComponent("sdkmanager").path + " --install \"platforms;android-\(droidy.project.compileSdkVersion)\" \"build-tools;\(buildToolsVersionToInstall)\" --sdk_root=" + sdkFolder.path]
+        process.arguments = ["bash", "-c", "yes | " + cmdLineToolsBinFolder.appendingPathComponent("sdkmanager").path + " --install \"platforms;android-\(droidy.project.compileSdkVersion)\" \"platform-tools\" \"build-tools;\(buildToolsVersionToInstall)\" --sdk_root=" + sdkFolder.path]
         process.standardOutput = stdout
         process.standardError = stderr
 
