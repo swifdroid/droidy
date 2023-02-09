@@ -12,7 +12,7 @@ public struct SigningConfig {
 }
 
 class Project {
-    lazy var projectFolder = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("AndroidProject")
+    var projectFolder: URL
     var appFolder: URL { projectFolder.appendingPathComponent("app") }
 	var appBuildFolder: URL { appFolder.appendingPathComponent("build") }
 	var appBuildOutputsFolder: URL { appBuildFolder.appendingPathComponent("outputs") }
@@ -36,6 +36,7 @@ class Project {
     
     init (_ droidy: Droidy) {
         self.droidy = droidy
+        self.projectFolder = droidy.projectFolder
     }
     
     func prepare() {
@@ -59,7 +60,7 @@ class Project {
     func cookProjectSettingsGradle() {
         let text = """
             include ':app'
-            rootProject.name = "\(URL(fileURLWithPath: FileManager.default.currentDirectoryPath).lastPathComponent)"
+            rootProject.name = "\(projectFolder.lastPathComponent)"
             """
         guard let data = text.data(using: .utf8) else {
             print("⛔️ Unable to cook `settings.gradle` file")

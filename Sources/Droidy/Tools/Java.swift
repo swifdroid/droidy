@@ -29,8 +29,9 @@ class Java {
                         brew tap adoptopenjdk/openjdk
                         brew install --cask adoptopenjdk8
                 """)
-            fatalError()
+            exit(1)
         }
+        
         checkVersion()
     }
     
@@ -61,11 +62,11 @@ class Java {
         group.wait()
         guard process.terminationStatus == 0 else {
             print("⛔️ Unable to check java version: \(String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)!)")
-            fatalError()
+            exit(1)
         }
         guard let str = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8), str.count > 0 else {
             print("⛔️ Unable to check java version")
-            fatalError()
+            exit(1)
         }
         
         for version in versions {

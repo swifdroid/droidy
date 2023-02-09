@@ -98,7 +98,7 @@ class Gradle {
             .replacingOccurrences(of: "Gradle ", with: "")
         guard version == installedVersion else {
             print("⛔️ Preferred gradle version \(self.version) doesn't match installed version \(installedVersion)")
-            fatalError()
+            exit(1)
         }
     }
     
@@ -130,7 +130,7 @@ class Gradle {
         group.wait()
         guard process.terminationStatus == 0 else {
             print("⛔️ Unable to generate gradlew: \(String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)!)")
-            fatalError()
+            exit(1)
         }
     }
 }

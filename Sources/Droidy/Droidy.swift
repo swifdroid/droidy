@@ -1,10 +1,27 @@
 import Foundation
 
+internal func projectDirURL(buildDir: String) -> URL {
+    URL(fileURLWithPath: projectDir(buildDir: buildDir))
+}
+
+internal func projectDir(buildDir: String) -> String {
+    var workDir = FileManager.default.currentDirectoryPath
+    
+    if #available(macOS 13.0, *) {
+        if workDir.contains("DerivedData"), let appDir = buildDir.split(separator: "Sources", maxSplits: 1).first {
+            workDir = String(appDir)
+        }
+    }
+    
+    return workDir
+}
+
 public class Droidy {
+    let projectFolder: URL
     let java = Java()
     let gradle = Gradle()
     let ndk = NDK()
-    lazy var toolchain = Toolchain(ndkPath: ndk._path)
+    lazy var toolchain = Toolchain(ndkPath: ndk._path, projectFolder: projectFolder)
     lazy var sdk = SDK(self)
     lazy var project = Project(self)
 	lazy var gradlew = GradleW(self)
@@ -13,17 +30,18 @@ public class Droidy {
 	var preferredDevice: ADB.Device?
     
     @discardableResult
-    public init () {
-        let workDir = FileManager.default.currentDirectoryPath
-        let packageFilePath = URL(fileURLWithPath: workDir).appendingPathComponent("Package.swift").path
+    public init(buildDir: String = #file) {
+        self.projectFolder = projectDirURL(buildDir: buildDir)
+        
+        let packageFilePath = projectFolder.appendingPathComponent("Package.swift").path
         if !FileManager.default.fileExists(atPath: packageFilePath) {
             print("""
                 ⛔️ seems working directory is wrong
-                    \(workDir)
+                    \(projectFolder.absoluteString)
                 💁‍♂️ cause it doesn't contain the Package.swift file
                 👉 to fix it please edit your scheme, open Options tab and set custom working directory to the project folder
                 """)
-            fatalError()
+            exit(1)
         }
     }
     
