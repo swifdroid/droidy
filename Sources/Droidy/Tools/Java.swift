@@ -8,7 +8,7 @@
 import Foundation
 
 class Java {
-    var version = "17.0.1"
+    var versions = ["17", "18", "19"]
     var autoInstall = false
     
     init () {}
@@ -23,7 +23,7 @@ class Java {
                 return _install()
             }
             print("""
-                ⚠️ Java is not installed but it is required. Please install java v\(version).
+                ⚠️ Java is not installed but it is required. Please install java v\(versions[0]) or higher.
                     👍 Either enable automatic installation by declaring `Droidy().automaticallyInstallJava()`
                     💁‍♂️ Or you could install it manually e.g. using brew:
                         brew tap adoptopenjdk/openjdk
@@ -67,9 +67,14 @@ class Java {
             print("⛔️ Unable to check java version")
             fatalError()
         }
-        guard str.contains(version) else {
-            print("⛔️ Java version differs with preferred version \(version)")
-            fatalError()
+        
+        for version in versions {
+            if str.contains(version) {
+                return
+            }
         }
+        
+        print("⛔️ Java version \(str) differs with preferred version \(versions[0])")
+        exit(1)
     }
 }
