@@ -213,13 +213,13 @@ class ADB {
 	}
 	
 	func pids(on device: Device, attempt: Int = 1) -> [String] {
-		guard attempt < 5 else {
+		guard attempt < 500 else {
 			print("📱 Unable to get app pid on device \(device.id)")
 			exit(1)
 		}
 		
 		if attempt > 1 {
-			sleep(1)
+			usleep(100_000)
 		}
 		
 		let stdout = Pipe()

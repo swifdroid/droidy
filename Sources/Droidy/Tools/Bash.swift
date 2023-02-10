@@ -53,7 +53,7 @@ struct Bash {
         let data = outHandle.readDataToEndOfFile()
         guard data.count > 0, let path = String(data: data, encoding: .utf8) else {
             print("⛔️ Unable to find program named \(program), please install it")
-            fatalError()
+            exit(1)
         }
         return path.trimmingCharacters(in: .whitespacesAndNewlines)
     }
