@@ -32,11 +32,13 @@ class Toolchain {
     var defaultPath: String { Droidy.folderURL().appendingPathComponent("swift-\(version)-android").path }
     var archs: [Arch] = [.aarch64, .armv7, .i686, .x86_64]
 	let ndkPath: String
+    let projectFolder: URL
     
-    private lazy var swift = Swift(self, ndkPath: ndkPath)
+    private lazy var swift = Swift(self, ndkPath: ndkPath, projectFolder: projectFolder)
     
-    init (ndkPath: String) {
+    init (ndkPath: String, projectFolder: URL) {
         self.ndkPath = ndkPath
+        self.projectFolder = projectFolder
         _path = ProcessInfo.processInfo.environment["toolchainPath"] ?? ""
     }
     

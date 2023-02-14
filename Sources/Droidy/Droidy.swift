@@ -1,10 +1,27 @@
 import Foundation
 
+internal func projectDirURL(buildDir: String) -> URL {
+    URL(fileURLWithPath: projectDir(buildDir: buildDir))
+}
+
+internal func projectDir(buildDir: String) -> String {
+    var workDir = FileManager.default.currentDirectoryPath
+    
+    if #available(macOS 13.0, *) {
+        if workDir.contains("DerivedData"), let appDir = buildDir.split(separator: "Sources", maxSplits: 1).first {
+            workDir = String(appDir)
+        }
+    }
+    
+    return workDir
+}
+
 public class Droidy {
+    let swiftProjectFolder: URL
     let java = Java()
     let gradle = Gradle()
     let ndk = NDK()
-    lazy var toolchain = Toolchain(ndkPath: ndk._path)
+    lazy var toolchain = Toolchain(ndkPath: ndk._path, projectFolder: swiftProjectFolder)
     lazy var sdk = SDK(self)
     lazy var project = Project(self)
 	lazy var gradlew = GradleW(self)
@@ -13,17 +30,18 @@ public class Droidy {
 	var preferredDevice: ADB.Device?
     
     @discardableResult
-    public init () {
-        let workDir = FileManager.default.currentDirectoryPath
-        let packageFilePath = URL(fileURLWithPath: workDir).appendingPathComponent("Package.swift").path
+    public init(buildDir: String = #file) {
+        self.swiftProjectFolder = projectDirURL(buildDir: buildDir)
+        
+        let packageFilePath = swiftProjectFolder.appendingPathComponent("Package.swift").path
         if !FileManager.default.fileExists(atPath: packageFilePath) {
             print("""
                 ⛔️ seems working directory is wrong
-                    \(workDir)
+                    \(swiftProjectFolder.absoluteString)
                 💁‍♂️ cause it doesn't contain the Package.swift file
                 👉 to fix it please edit your scheme, open Options tab and set custom working directory to the project folder
                 """)
-            fatalError()
+            exit(1)
         }
     }
     
@@ -275,11 +293,12 @@ public class Droidy {
     
     @discardableResult
     public func run() -> Self {
-		guard let device = preferredDevice ?? adb.devicesList().first else {
-			print("✅ No devices found to install and launch")
+		guard let device = preferredDevice ?? adb.devicesList().last else {
+			print("✅ No devices found to install to. Ending")
 			return self
 		}
 		gradlew.assembleDebug()
+        print("Installing to '\(device)'")
 		adb.install(on: device, pathToAPK: gradlew.pathToAPK(arch: device.arch, debug: true).path)
 		adb.kill(on: device)
 		adb.start(on: device, activity: "MainActivity")

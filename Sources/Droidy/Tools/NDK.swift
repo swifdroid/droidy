@@ -39,33 +39,34 @@ class NDK {
     }
     
     func prepare() {
-        guard _path.count > 0 else {
-            guard !FileManager.default.fileExists(atPath: defaultPath) else {
-                _path = defaultPath
-                checkVersion()
-                return print("🔦 NDK has been found at: \(defaultPath)")
-            }
-            guard !autoDownload else { return _download() }
-            print("""
-                ⚠️ Please set `ndkPath` environment variable for the `Run` target which should point to NDK folder.
-                🌏 If you haven't downloaded NDK yet
-                    👍 Either enable automatic downloading by declaring `Droidy().automaticallyDownloadNDK()`
-                    💁‍♂️ Or get it manually from \(url)
-                            and provide a link to downloaded archive by declaring `Droidy().localNDKArchive(...)`
-                """)
-            fatalError()
+        if FileManager.default.fileExists(atPath: defaultPath) {
+            _path = defaultPath
+            checkVersion()
+            return print("🔦 NDK has been found at: \(defaultPath)")
         }
-        checkVersion()
+        
+        if autoDownload {
+            return _download()
+        }
+        
+        print("""
+            ⚠️ Please set `ndkPath` environment variable for the `Run` target which should point to NDK folder.
+            🌏 If you haven't downloaded NDK yet
+                👍 Either enable automatic downloading by declaring `Droidy().automaticallyDownloadNDK()`
+                💁‍♂️ Or get it manually from \(url)
+                        and provide a link to downloaded archive by declaring `Droidy().localNDKArchive(...)`
+            """)
+        exit(1)
     }
     
     func checkVersion() {
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: _path).appendingPathComponent("source.properties")), let str = String(data: data, encoding: .utf8) else {
             print("⛔️ Unable to check NDK version, file `source.properties` not found in NDK path")
-            fatalError()
+            exit(1)
         }
         guard str.contains(version) else {
             print("⛔️ NDK version \(str) differs with preferred version \(version)")
-            fatalError()
+            exit(1)
         }
     }
 }

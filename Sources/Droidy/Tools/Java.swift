@@ -8,7 +8,8 @@
 import Foundation
 
 class Java {
-    var version = "17.0.1"
+    /// https://stackoverflow.com/questions/21423633/build-project-without-android-studio
+    var versions = ["17"]
     var autoInstall = false
     
     init () {}
@@ -23,14 +24,15 @@ class Java {
                 return _install()
             }
             print("""
-                ⚠️ Java is not installed but it is required. Please install java v\(version).
+                ⚠️ Java is not installed but it is required. Please install java v\(versions[0]) or higher.
                     👍 Either enable automatic installation by declaring `Droidy().automaticallyInstallJava()`
                     💁‍♂️ Or you could install it manually e.g. using brew:
                         brew tap adoptopenjdk/openjdk
                         brew install --cask adoptopenjdk8
                 """)
-            fatalError()
+            exit(1)
         }
+        
         checkVersion()
     }
     
@@ -61,15 +63,20 @@ class Java {
         group.wait()
         guard process.terminationStatus == 0 else {
             print("⛔️ Unable to check java version: \(String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)!)")
-            fatalError()
+            exit(1)
         }
         guard let str = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8), str.count > 0 else {
             print("⛔️ Unable to check java version")
-            fatalError()
+            exit(1)
         }
-        guard str.contains(version) else {
-            print("⛔️ Java version differs with preferred version \(version)")
-            fatalError()
+        
+        for version in versions {
+            if str.contains(version) {
+                return
+            }
         }
+        
+        print("⛔️ Java version \(str) differs with preferred version \(versions[0])")
+        exit(1)
     }
 }

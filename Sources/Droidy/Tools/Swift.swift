@@ -37,10 +37,12 @@ public enum Arch: String {
 class Swift {
     let toolchain: Toolchain
     let ndkPath: String
+    let projectFolder: URL
     
-    init (_ toolchain: Toolchain, ndkPath: String) {
+    init (_ toolchain: Toolchain, ndkPath: String, projectFolder: URL) {
         self.toolchain = toolchain
         self.ndkPath = ndkPath
+        self.projectFolder = projectFolder
     }
     
     func build(_ arch: Arch, _ productName: String) {
@@ -48,7 +50,7 @@ class Swift {
         let stderr = Pipe()
         
         let process = Process()
-        process.currentDirectoryPath = FileManager.default.currentDirectoryPath
+        process.currentDirectoryURL = projectFolder
         process.launchPath = toolchain._pathToAndroidBuild
         process.arguments = ["-target", arch.rawValue, "--product", productName]
         
@@ -214,6 +216,13 @@ class Swift {
             .appendingPathComponent("jniLibs")
             .appendingPathComponent(arch.android)
         
+        do {
+            try FileManager.default.createDirectory(atPath: outputPathURL.path, withIntermediateDirectories: true)
+        } catch {
+            print("⛔️ Unable to create directories for native library \(arch.rawValue)")
+            exit(1)
+        }
+        
         let stdout = Pipe()
         let stderr = Pipe()
 
@@ -241,20 +250,25 @@ class Swift {
         group.wait()
         guard process.terminationStatus == 0 else {
             print("⛔️ Unable to copy libs for \(arch.android): \(String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)!)")
-            fatalError()
+            exit(1)
         }
         let libPathURL = URL(fileURLWithPath: _libPath(arch).trimmingCharacters(in: .whitespacesAndNewlines))
         do {
-            try FileManager.default.contentsOfDirectory(atPath: libPathURL.path)
+            try FileManager.default.createDirectory(atPath: outputPathURL.path, withIntermediateDirectories: true)
+            let files = try FileManager.default.contentsOfDirectory(atPath: libPathURL.path)
                 .filter { $0.hasSuffix(".so") }
-                .forEach {
-                    try? FileManager.default.removeItem(atPath: outputPathURL.appendingPathComponent($0).path)
-                    try? FileManager.default.copyItem(atPath: libPathURL.appendingPathComponent($0).path, toPath: outputPathURL.appendingPathComponent($0).path)
-                }
+            
+            for file in files {
+                let source = libPathURL.appendingPathComponent(file).path
+                let output = outputPathURL.appendingPathComponent(file).path
+                print("📑 Copying \(file)")
+                try? FileManager.default.removeItem(atPath: output)
+                try FileManager.default.copyItem(atPath: source, toPath: output)
+            }
         } catch {
             print("⛔️ Unable to get list of *.so files for \(arch.android) from \(libPathURL.path)")
             print(error)
-            fatalError()
+            exit(1)
         }
     }
     
@@ -264,6 +278,7 @@ class Swift {
 
         let process = Process()
         process.launchPath = toolchain._pathToAndroidBuild
+        process.currentDirectoryURL = projectFolder
         process.arguments = ["-target", arch.rawValue, "--show-bin-path"]
         process.standardOutput = stdout
         process.standardError = stderr
@@ -285,11 +300,11 @@ class Swift {
         group.wait()
         guard process.terminationStatus == 0 else {
             print("⛔️ Unable to get *.so files path for \(arch.android): \(String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)!)")
-            fatalError()
+            exit(1)
         }
         guard let str = String(data: resultData, encoding: .utf8), str.count > 0 else {
             print("⛔️ Unable to get *.so files path for \(arch.android)")
-            fatalError()
+            exit(1)
         }
         return str
     }
